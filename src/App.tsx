@@ -1,6 +1,7 @@
 ﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
+type Language = "tr" | "ru";
 type TabKey = "home" | "chat" | "thumb" | "pet" | "games" | "profile";
 type GameTabKey = "pixelpaint" | "tictactoe" | "connect4";
 type PetRoom = "living" | "kitchen" | "bathroom" | "bedroom";
@@ -27,10 +28,10 @@ type ConnectCell = ConnectPlayer | null;
 
 type PaintPixelMap = Record<string, string>;
 
+type FoodId = "apple" | "cookie" | "carrot" | "cake";
+
 type FoodItem = {
-    id: string;
-    label: string;
-    emoji: string;
+    id: FoodId;
     hunger: number;
     happiness: number;
 };
@@ -102,10 +103,10 @@ const PAINT_COLORS = [
 ];
 
 const FOOD_ITEMS: FoodItem[] = [
-    { id: "apple", label: "Elma", emoji: "🍎", hunger: 12, happiness: 4 },
-    { id: "cookie", label: "Kurabiye", emoji: "🍪", hunger: 8, happiness: 8 },
-    { id: "carrot", label: "Havuç", emoji: "🥕", hunger: 10, happiness: 5 },
-    { id: "cake", label: "Pasta", emoji: "🍰", hunger: 15, happiness: 10 },
+    { id: "apple", hunger: 12, happiness: 4 },
+    { id: "cookie", hunger: 8, happiness: 8 },
+    { id: "carrot", hunger: 10, happiness: 5 },
+    { id: "cake", hunger: 15, happiness: 10 },
 ];
 
 const PIXEL_BOARD_SIZE = 200;
@@ -126,11 +127,349 @@ const ROOM_WIDTH = 340;
 const ROOM_HEIGHT = 560;
 const BALL_SIZE = 28;
 
-const PET_STORAGE_KEY = "take-me-pet-state-v5";
+const PET_STORAGE_KEY = "take-me-pet-state-v6";
+const LANGUAGE_STORAGE_KEY = "take-me-language-v1";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+const translations = {
+    tr: {
+        appBadge: "♡ Take Me",
+        heroTitle: "Couples space, but softer.",
+        heroSubtitle: "Senkron chat, Thumb Kiss, oyunlar ve ortak bakılan pet.",
+        statStatus: "Durum",
+        statActiveRoom: "Aktif oda",
+        statMessages: "Mesaj",
+        noRoom: "Yok",
+        noMail: "mail yok",
+        enterName: "İsmini gir",
+        profilePreviewName: "İsmini yaz",
+
+        thumbStatus: "Thumb Kiss",
+        typingStatus: "Typing",
+        connectedRoom: "Bağlı oda",
+
+        typingPartner: "Partner yazıyor",
+        typingIdle: "Sakin",
+
+        tabHome: "Ana alan",
+        tabChat: "Chat",
+        tabThumb: "Thumb Kiss",
+        tabPet: "Pet",
+        tabGames: "Oyunlar",
+        tabProfile: "Profil",
+
+        loginTitle: "Giriş / Kayıt",
+        loginSubtitle: "Aynı oda koduyla partnerinle eşleş ve uygulamaya birlikte gir.",
+        emailPlaceholder: "mail adresin",
+        passwordPlaceholder: "şifre",
+        signUp: "Kayıt ol",
+        signIn: "Giriş yap",
+
+        homeRoomMatch: "Oda / eşleşme",
+        createRoom: "Yeni oda oluştur",
+        roomCodePlaceholder: "oda kodu",
+        joinRoom: "Odaya gir",
+        copyCode: "Kodu kopyala",
+        currentRoom: "Şu an odadasın",
+
+        homeTodayArea: "Bugün sizin alanınız",
+        homeBond: "Bağ",
+        homeLive: "Canlı",
+        homeWaiting: "Bekliyor",
+        homeChat: "Chat",
+        homeTyping: "Typing",
+        homeYes: "Evet",
+        homeNo: "Hayır",
+
+        chatTitle: "Canlı chat",
+        noMessages: "Henüz mesaj yok",
+        partnerIsTyping: "Partner yazıyor...",
+        messagePlaceholder: "mesaj yaz",
+        send: "Gönder",
+        roomSummary: "Oda özeti",
+        summaryRoom: "Oda",
+        summaryTyping: "Typing",
+        active: "Aktif",
+        passive: "Pasif",
+
+        thumbTitle: "Thumb Kiss",
+        bondPanel: "Bağ paneli",
+        state: "Durum",
+        total: "Toplam",
+
+        petLiving: "Salon",
+        petKitchen: "Mutfak",
+        petBathroom: "Banyo",
+        petBedroom: "Yatak Odası",
+
+        petSharedStatus: "Ortak pet durumu",
+        petHunger: "Açlık",
+        petEnergy: "Enerji",
+        petCleanliness: "Temizlik",
+        petHappiness: "Mutluluk",
+
+        livingDesc: "Topu kim oynatırsa diğer tarafta da aynı anda görünür.",
+        kitchenDesc: "Biriniz yedirince ikinizde de aynı pet doyar.",
+        bathroomDesc: "Köpük ve temizlik de oda genelinde ortaktır.",
+        bedroomDesc: "Işığı kapatınca iki tarafta da uyur.",
+
+        bubbleCount: "Köpük",
+        dirtCount: "Kir",
+
+        lightsOff: "Işığı kapat",
+        lightsOn: "Işığı aç",
+
+        syncTitle: "Senkron",
+        syncDesc: "Odaya girince pet state karşı taraftan çekilir ve değişiklikler canlı yayılır.",
+
+        moodTitle: "Ruh hali",
+        moodSleeping: "Uyuyor",
+        moodHungry: "Aç",
+        moodDirty: "Kirli",
+        moodHappy: "Mutlu",
+        moodTired: "Uykulu",
+        moodNormal: "Normal",
+
+        gamesPixel: "Pixel Paint",
+        gamesTic: "Tic Tac Toe",
+        gamesConnect: "Four in a Row",
+        pixelDesc: "Canvas tabanlı 200 x 200 ortak çizim tahtası",
+        clearBoard: "Board temizle",
+        resetGame: "Oyunu sıfırla",
+        liveTwoPlayer: "Canlı 2 oyunculu oyun",
+        liveConnectDesc: "Canlı 2 oyunculu bağlantı oyunu",
+        mySymbol: "Senin sembolün",
+        turnResult: "Sıra / sonuç",
+        moveRight: "Hamle hakkı",
+        yourTurn: "Sende",
+        partnerTurn: "Partnerde",
+        finished: "Bitti",
+        draw: "Berabere",
+        turn: "Sıra",
+
+        profileTitle: "Profil",
+        namePlaceholder: "adın",
+        saveProfile: "Profili kaydet",
+        previewTitle: "Önizleme",
+        signOut: "Çıkış yap",
+
+        soap: "Sabun",
+        shower: "Duş",
+
+        language: "Dil",
+        langTr: "Türkçe",
+        langRu: "Русский",
+
+        foodNames: {
+            apple: "Elma",
+            cookie: "Kurabiye",
+            carrot: "Havuç",
+            cake: "Pasta",
+        },
+
+        statusNotLoggedIn: "Henüz giriş yapılmadı",
+        statusNeedEmailPassword: "Mail ve şifre yaz",
+        statusSignupOk: "Kayıt başarılı ✅ Şimdi giriş yap",
+        statusSignedIn: "Giriş yapıldı ✅",
+        statusNeedLogin: "Önce giriş yap",
+        statusNeedRoom: "Önce bir odaya gir",
+        statusNeedMessage: "Mesaj yaz",
+        statusMessageSent: "Mesaj gönderildi ✅",
+        statusCopied: "Oda kodu kopyalandı ✅",
+        statusRoomCreated: "Oda oluşturuldu ✅ Kod:",
+        statusRoomJoined: "Odaya girdin ✅",
+        statusRoomNotFound: "Oda bulunamadı",
+        statusNeedRoomCode: "Oda kodu yaz",
+        statusSavedProfile: "Profil kaydedildi ✅",
+        statusLoggedOut: "Çıkış yapıldı",
+        statusKissReady: "Hazır",
+        statusKissTouched: "Dokunuldu 💗",
+        statusKissConnected: "Bağ kuruldu ✨",
+
+        authCheckError: "Kullanıcı kontrol hatası: ",
+        signupError: "Kayıt hatası: ",
+        signinError: "Giriş hatası: ",
+        signoutError: "Çıkış hatası: ",
+        saveProfileError: "Profil kaydedilemedi: ",
+        roomCreateError: "Oda oluşturulamadı: ",
+        roomAddSelfError: "Odaya eklenemedin: ",
+        roomJoinError: "Odaya girilemedi: ",
+        messagesLoadError: "Mesajlar yüklenemedi: ",
+        messageSendError: "Mesaj gönderilemedi: ",
+        notYourTurn: "Şu an sıra sende değil",
+        foodFedSuffix: "yedirildi ✅",
+    },
+    ru: {
+        appBadge: "♡ Take Me",
+        heroTitle: "Пространство для пары, но мягче.",
+        heroSubtitle: "Синхронный чат, Thumb Kiss, игры и общий питомец.",
+        statStatus: "Статус",
+        statActiveRoom: "Активная комната",
+        statMessages: "Сообщения",
+        noRoom: "Нет",
+        noMail: "нет почты",
+        enterName: "Введите имя",
+        profilePreviewName: "Введите имя",
+
+        thumbStatus: "Thumb Kiss",
+        typingStatus: "Печать",
+        connectedRoom: "Подключенная комната",
+
+        typingPartner: "Партнёр печатает",
+        typingIdle: "Тихо",
+
+        tabHome: "Главная",
+        tabChat: "Чат",
+        tabThumb: "Thumb Kiss",
+        tabPet: "Питомец",
+        tabGames: "Игры",
+        tabProfile: "Профиль",
+
+        loginTitle: "Вход / Регистрация",
+        loginSubtitle: "Подключитесь к партнёру по одному коду комнаты и войдите вместе.",
+        emailPlaceholder: "твоя почта",
+        passwordPlaceholder: "пароль",
+        signUp: "Регистрация",
+        signIn: "Войти",
+
+        homeRoomMatch: "Комната / соединение",
+        createRoom: "Создать новую комнату",
+        roomCodePlaceholder: "код комнаты",
+        joinRoom: "Войти в комнату",
+        copyCode: "Скопировать код",
+        currentRoom: "Сейчас ты в комнате",
+
+        homeTodayArea: "Ваше пространство сегодня",
+        homeBond: "Связь",
+        homeLive: "Активно",
+        homeWaiting: "Ожидание",
+        homeChat: "Чат",
+        homeTyping: "Печать",
+        homeYes: "Да",
+        homeNo: "Нет",
+
+        chatTitle: "Живой чат",
+        noMessages: "Сообщений пока нет",
+        partnerIsTyping: "Партнёр печатает...",
+        messagePlaceholder: "напиши сообщение",
+        send: "Отправить",
+        roomSummary: "Сводка комнаты",
+        summaryRoom: "Комната",
+        summaryTyping: "Печать",
+        active: "Активно",
+        passive: "Пассивно",
+
+        thumbTitle: "Thumb Kiss",
+        bondPanel: "Панель связи",
+        state: "Состояние",
+        total: "Всего",
+
+        petLiving: "Гостиная",
+        petKitchen: "Кухня",
+        petBathroom: "Ванная",
+        petBedroom: "Спальня",
+
+        petSharedStatus: "Состояние общего питомца",
+        petHunger: "Голод",
+        petEnergy: "Энергия",
+        petCleanliness: "Чистота",
+        petHappiness: "Счастье",
+
+        livingDesc: "Если кто-то катает мяч, он одновременно виден и у другого.",
+        kitchenDesc: "Если один кормит, питомец становится сытым у вас обоих.",
+        bathroomDesc: "Пена и чистота тоже общие для комнаты.",
+        bedroomDesc: "Если выключить свет, он уснёт у вас обоих.",
+
+        bubbleCount: "Пена",
+        dirtCount: "Грязь",
+
+        lightsOff: "Выключить свет",
+        lightsOn: "Включить свет",
+
+        syncTitle: "Синхронизация",
+        syncDesc: "При входе в комнату состояние питомца запрашивается у второй стороны и далее обновляется в реальном времени.",
+
+        moodTitle: "Настроение",
+        moodSleeping: "Спит",
+        moodHungry: "Голодный",
+        moodDirty: "Грязный",
+        moodHappy: "Счастлив",
+        moodTired: "Сонный",
+        moodNormal: "Обычное",
+
+        gamesPixel: "Pixel Paint",
+        gamesTic: "Крестики-нолики",
+        gamesConnect: "Четыре в ряд",
+        pixelDesc: "Общая доска 200 x 200 на canvas",
+        clearBoard: "Очистить поле",
+        resetGame: "Сбросить игру",
+        liveTwoPlayer: "Игра на двоих в реальном времени",
+        liveConnectDesc: "Игра на двоих в реальном времени",
+        mySymbol: "Твой символ",
+        turnResult: "Ход / результат",
+        moveRight: "Право хода",
+        yourTurn: "Твой ход",
+        partnerTurn: "Ход партнёра",
+        finished: "Завершено",
+        draw: "Ничья",
+        turn: "Ход",
+
+        profileTitle: "Профиль",
+        namePlaceholder: "твоё имя",
+        saveProfile: "Сохранить профиль",
+        previewTitle: "Предпросмотр",
+        signOut: "Выйти",
+
+        soap: "Мыло",
+        shower: "Душ",
+
+        language: "Язык",
+        langTr: "Türkçe",
+        langRu: "Русский",
+
+        foodNames: {
+            apple: "Яблоко",
+            cookie: "Печенье",
+            carrot: "Морковь",
+            cake: "Торт",
+        },
+
+        statusNotLoggedIn: "Вход ещё не выполнен",
+        statusNeedEmailPassword: "Введите почту и пароль",
+        statusSignupOk: "Регистрация успешна ✅ Теперь войди",
+        statusSignedIn: "Вход выполнен ✅",
+        statusNeedLogin: "Сначала войди",
+        statusNeedRoom: "Сначала войди в комнату",
+        statusNeedMessage: "Напиши сообщение",
+        statusMessageSent: "Сообщение отправлено ✅",
+        statusCopied: "Код комнаты скопирован ✅",
+        statusRoomCreated: "Комната создана ✅ Код:",
+        statusRoomJoined: "Ты вошёл в комнату ✅",
+        statusRoomNotFound: "Комната не найдена",
+        statusNeedRoomCode: "Введи код комнаты",
+        statusSavedProfile: "Профиль сохранён ✅",
+        statusLoggedOut: "Выход выполнен",
+        statusKissReady: "Готово",
+        statusKissTouched: "Касание 💗",
+        statusKissConnected: "Связь установлена ✨",
+
+        authCheckError: "Ошибка проверки пользователя: ",
+        signupError: "Ошибка регистрации: ",
+        signinError: "Ошибка входа: ",
+        signoutError: "Ошибка выхода: ",
+        saveProfileError: "Не удалось сохранить профиль: ",
+        roomCreateError: "Не удалось создать комнату: ",
+        roomAddSelfError: "Не удалось добавить тебя в комнату: ",
+        roomJoinError: "Не удалось войти в комнату: ",
+        messagesLoadError: "Не удалось загрузить сообщения: ",
+        messageSendError: "Не удалось отправить сообщение: ",
+        notYourTurn: "Сейчас не твой ход",
+        foodFedSuffix: "скормлено ✅",
+    },
+} as const;
 
 function clamp(value: number, min = PET_MIN, max = PET_MAX) {
     return Math.max(min, Math.min(max, value));
@@ -243,10 +582,7 @@ function inputStyle(): React.CSSProperties {
     };
 }
 
-function buttonStyle(
-    background: string,
-    color: string = "#fff"
-): React.CSSProperties {
+function buttonStyle(background: string, color: string = "#fff"): React.CSSProperties {
     return {
         border: "none",
         borderRadius: 16,
@@ -332,9 +668,17 @@ function PetBar(props: { label: string; value: number; color: string }) {
 }
 
 export default function App() {
+    const initialLang =
+        (typeof window !== "undefined"
+            ? (localStorage.getItem(LANGUAGE_STORAGE_KEY) as Language | null)
+            : null) || "tr";
+
+    const [language, setLanguage] = useState<Language>(initialLang);
+    const t = translations[language];
+
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [status, setStatus] = useState("Henüz giriş yapılmadı");
+    const [status, setStatus] = useState(t.statusNotLoggedIn);
     const [activeTab, setActiveTab] = useState<TabKey>("home");
     const [gamesTab, setGamesTab] = useState<GameTabKey>("pixelpaint");
 
@@ -352,7 +696,7 @@ export default function App() {
     const [messages, setMessages] = useState<MessageRow[]>([]);
     const [draft, setDraft] = useState("");
     const [partnerTyping, setPartnerTyping] = useState(false);
-    const [kissState, setKissState] = useState("Hazır");
+    const [kissState, setKissState] = useState(t.statusKissReady);
     const [kissCount, setKissCount] = useState(0);
 
     const [selectedPaintColor, setSelectedPaintColor] = useState("#f43f5e");
@@ -365,13 +709,9 @@ export default function App() {
     const [ticWinner, setTicWinner] = useState<TicPlayer | "draw" | null>(null);
     const [ticMySymbol, setTicMySymbol] = useState<TicPlayer>("X");
 
-    const [connectBoard, setConnectBoard] = useState<ConnectCell[][]>(
-        getEmptyConnectBoard()
-    );
+    const [connectBoard, setConnectBoard] = useState<ConnectCell[][]>(getEmptyConnectBoard());
     const [connectTurn, setConnectTurn] = useState<ConnectPlayer>("X");
-    const [connectWinner, setConnectWinner] = useState<
-        ConnectPlayer | "draw" | null
-    >(null);
+    const [connectWinner, setConnectWinner] = useState<ConnectPlayer | "draw" | null>(null);
     const [connectMySymbol, setConnectMySymbol] = useState<ConnectPlayer>("X");
 
     const [petRoom, setPetRoom] = useState<PetRoom>("living");
@@ -436,6 +776,7 @@ export default function App() {
     const petSyncTimerRef = useRef<number | null>(null);
 
     const pixelSize = useMemo(() => PIXEL_CANVAS_SIZE / PIXEL_BOARD_SIZE, []);
+
     const petFaceMood = useMemo(() => {
         if (petSleeping) return "sleep";
         if (petStats.hunger < 35) return "hungry";
@@ -444,6 +785,58 @@ export default function App() {
         if (petStats.energy < 30) return "tired";
         return "normal";
     }, [petSleeping, petStats]);
+
+    useEffect(() => {
+        localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+        setKissState((prev) => {
+            if (
+                prev === translations.tr.statusKissReady ||
+                prev === translations.ru.statusKissReady
+            ) {
+                return translations[language].statusKissReady;
+            }
+            if (
+                prev === translations.tr.statusKissTouched ||
+                prev === translations.ru.statusKissTouched
+            ) {
+                return translations[language].statusKissTouched;
+            }
+            if (
+                prev === translations.tr.statusKissConnected ||
+                prev === translations.ru.statusKissConnected
+            ) {
+                return translations[language].statusKissConnected;
+            }
+            return prev;
+        });
+
+        setStatus((prev) => {
+            const known = [
+                translations.tr.statusNotLoggedIn,
+                translations.ru.statusNotLoggedIn,
+                translations.tr.statusSignedIn,
+                translations.ru.statusSignedIn,
+                translations.tr.statusLoggedOut,
+                translations.ru.statusLoggedOut,
+            ];
+            if (known.includes(prev)) {
+                if (prev === translations.tr.statusNotLoggedIn || prev === translations.ru.statusNotLoggedIn) {
+                    return translations[language].statusNotLoggedIn;
+                }
+                if (prev === translations.tr.statusSignedIn || prev === translations.ru.statusSignedIn) {
+                    return translations[language].statusSignedIn;
+                }
+                if (prev === translations.tr.statusLoggedOut || prev === translations.ru.statusLoggedOut) {
+                    return translations[language].statusLoggedOut;
+                }
+            }
+            return prev;
+        });
+    }, [language]);
+
+    function foodLabel(foodId: FoodId): string {
+        return t.foodNames[foodId];
+    }
 
     function getPetSnapshot(): PetSaveData {
         return {
@@ -521,8 +914,7 @@ export default function App() {
             if (!audioCtxRef.current) {
                 const Ctx =
                     window.AudioContext ||
-                    (window as typeof window & { webkitAudioContext?: typeof AudioContext })
-                        .webkitAudioContext;
+                    (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
                 if (!Ctx) return;
                 audioCtxRef.current = new Ctx();
             }
@@ -542,14 +934,10 @@ export default function App() {
 
             oscillator.start();
 
-            gainNode.gain.exponentialRampToValueAtTime(
-                0.0001,
-                ctx.currentTime + duration
-            );
-
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
             oscillator.stop(ctx.currentTime + duration);
         } catch {
-            // sessiz geç
+            //
         }
     }
 
@@ -607,7 +995,7 @@ export default function App() {
                 if (parsed.showerPos) setShowerPos(parsed.showerPos);
                 if (parsed.ball) setBall(parsed.ball);
             } catch {
-                // yok say
+                //
             }
         }
 
@@ -615,18 +1003,10 @@ export default function App() {
             data.subscription.unsubscribe();
             cleanupRealtime();
 
-            if (typingTimerRef.current !== null) {
-                window.clearTimeout(typingTimerRef.current);
-            }
-            if (kissTimerRef.current !== null) {
-                window.clearTimeout(kissTimerRef.current);
-            }
-            if (saveTimerRef.current !== null) {
-                window.clearTimeout(saveTimerRef.current);
-            }
-            if (petSyncTimerRef.current !== null) {
-                window.clearTimeout(petSyncTimerRef.current);
-            }
+            if (typingTimerRef.current !== null) window.clearTimeout(typingTimerRef.current);
+            if (kissTimerRef.current !== null) window.clearTimeout(kissTimerRef.current);
+            if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current);
+            if (petSyncTimerRef.current !== null) window.clearTimeout(petSyncTimerRef.current);
 
             window.removeEventListener("mouseup", stopPaint);
             window.removeEventListener("touchend", stopPaint);
@@ -702,9 +1082,7 @@ export default function App() {
                 cleanliness: clamp(prev.cleanliness - 0.35),
                 happiness: clamp(
                     prev.happiness -
-                    (prev.hunger < 30 || prev.cleanliness < 30 || prev.energy < 25
-                        ? 0.5
-                        : 0.18)
+                    (prev.hunger < 30 || prev.cleanliness < 30 || prev.energy < 25 ? 0.5 : 0.18)
                 ),
             }));
         }, 2500);
@@ -745,9 +1123,7 @@ export default function App() {
                     vx *= 0.985;
                 }
 
-                const nearPet =
-                    Math.abs(x - (PET_CENTER_X - 14)) < 80 &&
-                    Math.abs(y - (PET_CENTER_Y + 40)) < 110;
+                const nearPet = Math.abs(x - (PET_CENTER_X - 14)) < 80 && Math.abs(y - (PET_CENTER_Y + 40)) < 110;
 
                 if (nearPet) {
                     setPetStats((p) => ({
@@ -846,12 +1222,7 @@ export default function App() {
             if (Number.isNaN(r) || Number.isNaN(c)) continue;
 
             ctx.fillStyle = color;
-            ctx.fillRect(
-                c * pixelSize + 1,
-                r * pixelSize + 1,
-                pixelSize - 1,
-                pixelSize - 1
-            );
+            ctx.fillRect(c * pixelSize + 1, r * pixelSize + 1, pixelSize - 1, pixelSize - 1);
         }
     }
 
@@ -912,7 +1283,7 @@ export default function App() {
             .on("broadcast", { event: "thumbkiss" }, ({ payload }: any) => {
                 if (!payload || payload.senderId === userId) return;
 
-                setKissState("Bağ kuruldu ✨");
+                setKissState(t.statusKissConnected);
                 setKissCount((prev) => prev + 1);
 
                 if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
@@ -922,7 +1293,7 @@ export default function App() {
                 }
 
                 kissTimerRef.current = window.setTimeout(() => {
-                    setKissState("Hazır");
+                    setKissState(t.statusKissReady);
                 }, 1800);
             })
             .on("broadcast", { event: "paint_pixel" }, ({ payload }: any) => {
@@ -1061,11 +1432,11 @@ export default function App() {
 
     async function sendThumbKiss(): Promise<void> {
         if (!roomChannelRef.current || !joinedRoomId || !userId) {
-            setStatus("Önce bir odaya gir");
+            setStatus(t.statusNeedRoom);
             return;
         }
 
-        setKissState("Dokunuldu 💗");
+        setKissState(t.statusKissTouched);
         setKissCount((prev) => prev + 1);
 
         if (navigator.vibrate) navigator.vibrate(90);
@@ -1081,7 +1452,7 @@ export default function App() {
         }
 
         kissTimerRef.current = window.setTimeout(() => {
-            setKissState("Hazır");
+            setKissState(t.statusKissReady);
         }, 1200);
     }
 
@@ -1112,7 +1483,7 @@ export default function App() {
 
     async function paintAt(row: number, col: number): Promise<void> {
         if (!roomChannelRef.current || !joinedRoomId || !userId) {
-            setStatus("Önce bir odaya gir");
+            setStatus(t.statusNeedRoom);
             return;
         }
 
@@ -1123,12 +1494,7 @@ export default function App() {
                 const rr = row + dr;
                 const cc = col + dc;
 
-                if (
-                    rr >= 0 &&
-                    rr < PIXEL_BOARD_SIZE &&
-                    cc >= 0 &&
-                    cc < PIXEL_BOARD_SIZE
-                ) {
+                if (rr >= 0 && rr < PIXEL_BOARD_SIZE && cc >= 0 && cc < PIXEL_BOARD_SIZE) {
                     updates.push({ row: rr, col: cc, color: selectedPaintColor });
                 }
             }
@@ -1158,7 +1524,7 @@ export default function App() {
 
     async function clearBoard(): Promise<void> {
         if (!roomChannelRef.current || !joinedRoomId || !userId) {
-            setStatus("Önce bir odaya gir");
+            setStatus(t.statusNeedRoom);
             return;
         }
 
@@ -1173,14 +1539,14 @@ export default function App() {
 
     async function makeTicMove(index: number): Promise<void> {
         if (!roomChannelRef.current || !joinedRoomId || !userId) {
-            setStatus("Önce bir odaya gir");
+            setStatus(t.statusNeedRoom);
             return;
         }
 
         if (ticWinner) return;
         if (ticBoard[index] !== null) return;
         if (ticTurn !== ticMySymbol) {
-            setStatus("Şu an sıra sende değil");
+            setStatus(t.notYourTurn);
             return;
         }
 
@@ -1212,7 +1578,7 @@ export default function App() {
 
     async function resetTicGame(): Promise<void> {
         if (!roomChannelRef.current || !joinedRoomId || !userId) {
-            setStatus("Önce bir odaya gir");
+            setStatus(t.statusNeedRoom);
             return;
         }
 
@@ -1229,13 +1595,13 @@ export default function App() {
 
     async function makeConnectMove(col: number): Promise<void> {
         if (!roomChannelRef.current || !joinedRoomId || !userId) {
-            setStatus("Önce bir odaya gir");
+            setStatus(t.statusNeedRoom);
             return;
         }
 
         if (connectWinner) return;
         if (connectTurn !== connectMySymbol) {
-            setStatus("Şu an sıra sende değil");
+            setStatus(t.notYourTurn);
             return;
         }
 
@@ -1270,7 +1636,7 @@ export default function App() {
 
     async function resetConnectGame(): Promise<void> {
         if (!roomChannelRef.current || !joinedRoomId || !userId) {
-            setStatus("Önce bir odaya gir");
+            setStatus(t.statusNeedRoom);
             return;
         }
 
@@ -1297,12 +1663,7 @@ export default function App() {
     }
 
     function isNearMouth(x: number, y: number) {
-        return (
-            x > PET_CENTER_X - 38 &&
-            x < PET_CENTER_X + 38 &&
-            y > PET_CENTER_Y + 6 &&
-            y < PET_CENTER_Y + 52
-        );
+        return x > PET_CENTER_X - 38 && x < PET_CENTER_X + 38 && y > PET_CENTER_Y + 6 && y < PET_CENTER_Y + 52;
     }
 
     function handleGlobalDragMove(clientX: number, clientY: number) {
@@ -1419,7 +1780,7 @@ export default function App() {
                         cleanliness: prev.cleanliness,
                         happiness: clamp(prev.happiness + eatenItem.happiness),
                     }));
-                    setStatus(`${eatenItem.label} yedirildi ✅`);
+                    setStatus(`${foodLabel(eatenItem.id)} ${t.foodFedSuffix}`);
                 }, 450);
 
                 window.setTimeout(() => {
@@ -1461,14 +1822,14 @@ export default function App() {
         const onMouseMove = (e: MouseEvent) => handleGlobalDragMove(e.clientX, e.clientY);
         const onMouseUp = (e: MouseEvent) => handleGlobalDragEnd(e.clientX, e.clientY);
         const onTouchMove = (e: TouchEvent) => {
-            const t = e.touches[0];
-            if (!t) return;
+            const touch = e.touches[0];
+            if (!touch) return;
             if (dragMode) e.preventDefault();
-            handleGlobalDragMove(t.clientX, t.clientY);
+            handleGlobalDragMove(touch.clientX, touch.clientY);
         };
         const onTouchEnd = (e: TouchEvent) => {
-            const t = e.changedTouches[0];
-            handleGlobalDragEnd(t?.clientX, t?.clientY);
+            const touch = e.changedTouches[0];
+            handleGlobalDragEnd(touch?.clientX, touch?.clientY);
         };
 
         window.addEventListener("mousemove", onMouseMove);
@@ -1491,7 +1852,7 @@ export default function App() {
         } = await supabase.auth.getUser();
 
         if (error) {
-            setStatus("Kullanıcı kontrol hatası: " + error.message);
+            setStatus(t.authCheckError + error.message);
             return;
         }
 
@@ -1501,53 +1862,53 @@ export default function App() {
             setJoinedRoomCode("");
             setJoinedRoomId("");
             setMessages([]);
-            setStatus("Henüz giriş yapılmadı");
+            setStatus(t.statusNotLoggedIn);
             return;
         }
 
         setUserId(user.id);
         setUserEmail(user.email || "");
-        setStatus("Giriş yapıldı ✅");
+        setStatus(t.statusSignedIn);
         await loadProfile(user.id);
     }
 
     async function signUp(): Promise<void> {
         if (!email || !password) {
-            setStatus("Mail ve şifre yaz");
+            setStatus(t.statusNeedEmailPassword);
             return;
         }
 
         const { error } = await supabase.auth.signUp({ email, password });
 
         if (error) {
-            setStatus("Kayıt hatası: " + error.message);
+            setStatus(t.signupError + error.message);
             return;
         }
 
-        setStatus("Kayıt başarılı ✅ Şimdi giriş yap");
+        setStatus(t.statusSignupOk);
     }
 
     async function signIn(): Promise<void> {
         if (!email || !password) {
-            setStatus("Mail ve şifre yaz");
+            setStatus(t.statusNeedEmailPassword);
             return;
         }
 
         const { error } = await supabase.auth.signInWithPassword({ email, password });
 
         if (error) {
-            setStatus("Giriş hatası: " + error.message);
+            setStatus(t.signinError + error.message);
             return;
         }
 
-        setStatus("Giriş yapıldı ✅");
+        setStatus(t.statusSignedIn);
     }
 
     async function signOut(): Promise<void> {
         const { error } = await supabase.auth.signOut();
 
         if (error) {
-            setStatus("Çıkış hatası: " + error.message);
+            setStatus(t.signoutError + error.message);
             return;
         }
 
@@ -1564,7 +1925,7 @@ export default function App() {
         setConnectBoard(getEmptyConnectBoard());
         setConnectTurn("X");
         setConnectWinner(null);
-        setStatus("Çıkış yapıldı");
+        setStatus(t.statusLoggedOut);
     }
 
     async function loadProfile(id: string): Promise<void> {
@@ -1584,7 +1945,7 @@ export default function App() {
 
     async function saveProfile(): Promise<void> {
         if (!userId) {
-            setStatus("Önce giriş yap");
+            setStatus(t.statusNeedLogin);
             return;
         }
 
@@ -1596,16 +1957,16 @@ export default function App() {
         });
 
         if (error) {
-            setStatus("Profil kaydedilemedi: " + error.message);
+            setStatus(t.saveProfileError + error.message);
             return;
         }
 
-        setStatus("Profil kaydedildi ✅");
+        setStatus(t.statusSavedProfile);
     }
 
     async function createRoom(): Promise<void> {
         if (!userId) {
-            setStatus("Önce giriş yap");
+            setStatus(t.statusNeedLogin);
             return;
         }
 
@@ -1618,7 +1979,7 @@ export default function App() {
             .single();
 
         if (roomError) {
-            setStatus("Oda oluşturulamadı: " + roomError.message);
+            setStatus(t.roomCreateError + roomError.message);
             return;
         }
 
@@ -1628,7 +1989,7 @@ export default function App() {
         );
 
         if (memberError) {
-            setStatus("Odaya eklenemedin: " + memberError.message);
+            setStatus(t.roomAddSelfError + memberError.message);
             return;
         }
 
@@ -1646,19 +2007,19 @@ export default function App() {
         setConnectWinner(null);
         setConnectMySymbol("X");
         setActiveTab("chat");
-        setStatus("Oda oluşturuldu ✅ Kod: " + code);
+        setStatus(`${t.statusRoomCreated} ${code}`);
     }
 
     async function joinRoom(): Promise<void> {
         if (!userId) {
-            setStatus("Önce giriş yap");
+            setStatus(t.statusNeedLogin);
             return;
         }
 
         const cleanCode = roomCodeInput.trim().toUpperCase();
 
         if (!cleanCode) {
-            setStatus("Oda kodu yaz");
+            setStatus(t.statusNeedRoomCode);
             return;
         }
 
@@ -1669,7 +2030,7 @@ export default function App() {
             .single();
 
         if (roomError || !room) {
-            setStatus("Oda bulunamadı");
+            setStatus(t.statusRoomNotFound);
             return;
         }
 
@@ -1679,7 +2040,7 @@ export default function App() {
         );
 
         if (memberError) {
-            setStatus("Odaya girilemedi: " + memberError.message);
+            setStatus(t.roomJoinError + memberError.message);
             return;
         }
 
@@ -1696,13 +2057,13 @@ export default function App() {
         setConnectWinner(null);
         setConnectMySymbol("O");
         setActiveTab("chat");
-        setStatus("Odaya girdin ✅");
+        setStatus(t.statusRoomJoined);
     }
 
     async function copyRoomCode(): Promise<void> {
         if (!joinedRoomCode) return;
         await navigator.clipboard.writeText(joinedRoomCode);
-        setStatus("Oda kodu kopyalandı ✅");
+        setStatus(t.statusCopied);
     }
 
     async function loadMessages(roomId: string): Promise<void> {
@@ -1713,7 +2074,7 @@ export default function App() {
             .order("created_at", { ascending: true });
 
         if (error) {
-            setStatus("Mesajlar yüklenemedi: " + error.message);
+            setStatus(t.messagesLoadError + error.message);
             return;
         }
 
@@ -1722,18 +2083,18 @@ export default function App() {
 
     async function sendMessage(): Promise<void> {
         if (!userId) {
-            setStatus("Önce giriş yap");
+            setStatus(t.statusNeedLogin);
             return;
         }
 
         if (!joinedRoomId) {
-            setStatus("Önce bir odaya gir");
+            setStatus(t.statusNeedRoom);
             return;
         }
 
         const text = draft.trim();
         if (!text) {
-            setStatus("Mesaj yaz");
+            setStatus(t.statusNeedMessage);
             return;
         }
 
@@ -1747,11 +2108,11 @@ export default function App() {
         });
 
         if (error) {
-            setStatus("Mesaj gönderilemedi: " + error.message);
+            setStatus(t.messageSendError + error.message);
             return;
         }
 
-        setStatus("Mesaj gönderildi ✅");
+        setStatus(t.statusMessageSent);
     }
 
     function renderTabButton(tab: TabKey, label: string) {
@@ -1803,15 +2164,24 @@ export default function App() {
     }
 
     function ticStatusText(): string {
-        if (ticWinner === "draw") return "Berabere";
-        if (ticWinner) return `${ticWinner} kazandı`;
-        return `Sıra: ${ticTurn}`;
+        if (ticWinner === "draw") return t.draw;
+        if (ticWinner) return `${ticWinner} ${language === "tr" ? "kazandı" : "победил"}`;
+        return `${t.turn}: ${ticTurn}`;
     }
 
     function connectStatusText(): string {
-        if (connectWinner === "draw") return "Berabere";
-        if (connectWinner) return `${connectWinner} kazandı`;
-        return `Sıra: ${connectTurn}`;
+        if (connectWinner === "draw") return t.draw;
+        if (connectWinner) return `${connectWinner} ${language === "tr" ? "kazandı" : "победил"}`;
+        return `${t.turn}: ${connectTurn}`;
+    }
+
+    function moodText(): string {
+        if (petSleeping) return t.moodSleeping;
+        if (petFaceMood === "hungry") return t.moodHungry;
+        if (petFaceMood === "dirty") return t.moodDirty;
+        if (petFaceMood === "happy") return t.moodHappy;
+        if (petFaceMood === "tired") return t.moodTired;
+        return t.moodNormal;
     }
 
     const loggedIn = Boolean(userId);
@@ -1850,16 +2220,12 @@ export default function App() {
                                 marginBottom: 12,
                             }}
                         >
-                            ♡ Take Me
+                            {t.appBadge}
                         </div>
 
-                        <h1 style={{ margin: 0, fontSize: 48, lineHeight: 1.05 }}>
-                            Couples space, but softer.
-                        </h1>
+                        <h1 style={{ margin: 0, fontSize: 48, lineHeight: 1.05 }}>{t.heroTitle}</h1>
 
-                        <p style={{ marginTop: 14, color: "#475569", fontSize: 16 }}>
-                            Senkron chat, Thumb Kiss, oyunlar ve ortak bakılan pet.
-                        </p>
+                        <p style={{ marginTop: 14, color: "#475569", fontSize: 16 }}>{t.heroSubtitle}</p>
 
                         <div
                             style={{
@@ -1869,9 +2235,9 @@ export default function App() {
                                 marginTop: 20,
                             }}
                         >
-                            <Stat label="Durum" value={status} />
-                            <Stat label="Aktif oda" value={joinedRoomCode || "-"} />
-                            <Stat label="Mesaj" value={String(messages.length)} />
+                            <Stat label={t.statStatus} value={status} />
+                            <Stat label={t.statActiveRoom} value={joinedRoomCode || "-"} />
+                            <Stat label={t.statMessages} value={String(messages.length)} />
                         </div>
                     </div>
 
@@ -1882,41 +2248,74 @@ export default function App() {
                             color: "#fff",
                         }}
                     >
-                        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                            <div
-                                style={{
-                                    width: 70,
-                                    height: 70,
-                                    borderRadius: 24,
-                                    background: avatarColor,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    fontSize: 32,
-                                }}
-                            >
-                                {avatarEmoji}
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "flex-start" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                                <div
+                                    style={{
+                                        width: 70,
+                                        height: 70,
+                                        borderRadius: 24,
+                                        background: avatarColor,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        fontSize: 32,
+                                    }}
+                                >
+                                    {avatarEmoji}
+                                </div>
+
+                                <div>
+                                    <div style={{ fontSize: 20, fontWeight: 700 }}>{displayName || t.enterName}</div>
+                                    <div style={{ fontSize: 14, color: "#cbd5e1" }}>{userEmail || t.noMail}</div>
+                                </div>
                             </div>
 
-                            <div>
-                                <div style={{ fontSize: 20, fontWeight: 700 }}>
-                                    {displayName || "İsmini gir"}
+                            <div
+                                style={{
+                                    minWidth: 150,
+                                    background: "rgba(255,255,255,0.08)",
+                                    borderRadius: 16,
+                                    padding: 12,
+                                }}
+                            >
+                                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6, color: "#cbd5e1", marginBottom: 8 }}>
+                                    {t.language}
                                 </div>
-                                <div style={{ fontSize: 14, color: "#cbd5e1" }}>
-                                    {userEmail || "Giriş bekleniyor"}
+                                <div style={{ display: "flex", gap: 8 }}>
+                                    <button
+                                        onClick={() => setLanguage("tr")}
+                                        style={{
+                                            ...buttonStyle(language === "tr" ? "#f43f5e" : "#ffffff", language === "tr" ? "#fff" : "#111827"),
+                                            padding: "8px 12px",
+                                            flex: 1,
+                                        }}
+                                    >
+                                        {t.langTr}
+                                    </button>
+                                    <button
+                                        onClick={() => setLanguage("ru")}
+                                        style={{
+                                            ...buttonStyle(language === "ru" ? "#f43f5e" : "#ffffff", language === "ru" ? "#fff" : "#111827"),
+                                            padding: "8px 12px",
+                                            flex: 1,
+                                        }}
+                                    >
+                                        {t.langRu}
+                                    </button>
                                 </div>
                             </div>
                         </div>
 
                         <div style={{ marginTop: 18, display: "grid", gap: 12 }}>
                             <div style={{ background: "rgba(255,255,255,0.09)", padding: 14, borderRadius: 18 }}>
-                                Thumb Kiss: <b>{kissState}</b>
+                                {t.thumbStatus}: <b>{kissState}</b>
                             </div>
                             <div style={{ background: "rgba(255,255,255,0.09)", padding: 14, borderRadius: 18 }}>
-                                Typing: <b>{partnerTyping ? "Partner yazıyor" : "Sakin"}</b>
+                                {t.typingStatus}: <b>{partnerTyping ? t.typingPartner : t.typingIdle}</b>
                             </div>
                             <div style={{ background: "rgba(255,255,255,0.09)", padding: 14, borderRadius: 18 }}>
-                                Bağlı oda: <b>{joinedRoomCode || "Yok"}</b>
+                                {t.connectedRoom}: <b>{joinedRoomCode || t.noRoom}</b>
                             </div>
                         </div>
                     </div>
@@ -1924,14 +2323,12 @@ export default function App() {
 
                 {!loggedIn ? (
                     <div style={{ ...panelStyle(), maxWidth: 600, margin: "0 auto", padding: 28 }}>
-                        <h2 style={{ marginTop: 0 }}>Giriş / Kayıt</h2>
-                        <p style={{ color: "#64748b", marginBottom: 20 }}>
-                            Aynı oda koduyla partnerinle eşleş ve uygulamaya birlikte gir.
-                        </p>
+                        <h2 style={{ marginTop: 0 }}>{t.loginTitle}</h2>
+                        <p style={{ color: "#64748b", marginBottom: 20 }}>{t.loginSubtitle}</p>
 
                         <input
                             type="email"
-                            placeholder="mail adresin"
+                            placeholder={t.emailPlaceholder}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             style={{ ...inputStyle(), marginBottom: 12 }}
@@ -1939,7 +2336,7 @@ export default function App() {
 
                         <input
                             type="password"
-                            placeholder="şifre"
+                            placeholder={t.passwordPlaceholder}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             style={{ ...inputStyle(), marginBottom: 16 }}
@@ -1947,10 +2344,10 @@ export default function App() {
 
                         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                             <button onClick={() => void signUp()} style={buttonStyle("#111827")}>
-                                Kayıt ol
+                                {t.signUp}
                             </button>
                             <button onClick={() => void signIn()} style={buttonStyle("#f43f5e")}>
-                                Giriş yap
+                                {t.signIn}
                             </button>
                         </div>
                     </div>
@@ -1968,29 +2365,29 @@ export default function App() {
                                 border: "1px solid rgba(255,255,255,0.7)",
                             }}
                         >
-                            {renderTabButton("home", "Ana alan")}
-                            {renderTabButton("chat", "Chat")}
-                            {renderTabButton("thumb", "Thumb Kiss")}
-                            {renderTabButton("pet", "Pet")}
-                            {renderTabButton("games", "Oyunlar")}
-                            {renderTabButton("profile", "Profil")}
+                            {renderTabButton("home", t.tabHome)}
+                            {renderTabButton("chat", t.tabChat)}
+                            {renderTabButton("thumb", t.tabThumb)}
+                            {renderTabButton("pet", t.tabPet)}
+                            {renderTabButton("games", t.tabGames)}
+                            {renderTabButton("profile", t.tabProfile)}
                         </div>
 
                         {activeTab === "home" && (
                             <div style={{ display: "grid", gap: 16, gridTemplateColumns: "1fr 1fr" }}>
                                 <div style={panelStyle({ padding: 24 })}>
-                                    <h2 style={{ marginTop: 0 }}>Oda / eşleşme</h2>
+                                    <h2 style={{ marginTop: 0 }}>{t.homeRoomMatch}</h2>
 
                                     <button
                                         onClick={() => void createRoom()}
                                         style={{ ...buttonStyle("#f43f5e"), marginBottom: 16 }}
                                     >
-                                        Yeni oda oluştur
+                                        {t.createRoom}
                                     </button>
 
                                     <input
                                         type="text"
-                                        placeholder="oda kodu"
+                                        placeholder={t.roomCodePlaceholder}
                                         value={roomCodeInput}
                                         onChange={(e) => setRoomCodeInput(e.target.value.toUpperCase())}
                                         style={{ ...inputStyle(), marginBottom: 12 }}
@@ -1998,50 +2395,48 @@ export default function App() {
 
                                     <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                                         <button onClick={() => void joinRoom()} style={buttonStyle("#111827")}>
-                                            Odaya gir
+                                            {t.joinRoom}
                                         </button>
                                         <button onClick={() => void copyRoomCode()} style={buttonStyle("#f3f4f6", "#374151")}>
-                                            Kodu kopyala
+                                            {t.copyCode}
                                         </button>
                                     </div>
 
                                     {joinedRoomCode && (
                                         <p style={{ marginTop: 16, color: "#475569" }}>
-                                            Şu an odadasın: <b>{joinedRoomCode}</b>
+                                            {t.currentRoom}: <b>{joinedRoomCode}</b>
                                         </p>
                                     )}
                                 </div>
 
                                 <div style={panelStyle({ padding: 24 })}>
-                                    <h2 style={{ marginTop: 0 }}>Bugün sizin alanınız</h2>
+                                    <h2 style={{ marginTop: 0 }}>{t.homeTodayArea}</h2>
 
                                     <div style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr" }}>
                                         <div style={{ ...panelStyle(), padding: 16, background: "#fff1f2" }}>
-                                            <div style={{ fontSize: 12, color: "#64748b" }}>Bağ</div>
+                                            <div style={{ fontSize: 12, color: "#64748b" }}>{t.homeBond}</div>
                                             <div style={{ marginTop: 8, fontSize: 22, fontWeight: 700 }}>
-                                                {joinedRoomCode ? "Canlı" : "Bekliyor"}
+                                                {joinedRoomCode ? t.homeLive : t.homeWaiting}
                                             </div>
                                         </div>
 
                                         <div style={{ ...panelStyle(), padding: 16, background: "#faf5ff" }}>
-                                            <div style={{ fontSize: 12, color: "#64748b" }}>Chat</div>
+                                            <div style={{ fontSize: 12, color: "#64748b" }}>{t.homeChat}</div>
                                             <div style={{ marginTop: 8, fontSize: 22, fontWeight: 700 }}>
-                                                {messages.length} mesaj
+                                                {messages.length} {language === "tr" ? "mesaj" : "сообщений"}
                                             </div>
                                         </div>
 
                                         <div style={{ ...panelStyle(), padding: 16, background: "#fffbeb" }}>
-                                            <div style={{ fontSize: 12, color: "#64748b" }}>Typing</div>
+                                            <div style={{ fontSize: 12, color: "#64748b" }}>{t.homeTyping}</div>
                                             <div style={{ marginTop: 8, fontSize: 22, fontWeight: 700 }}>
-                                                {partnerTyping ? "Evet" : "Hayır"}
+                                                {partnerTyping ? t.homeYes : t.homeNo}
                                             </div>
                                         </div>
 
                                         <div style={{ ...panelStyle(), padding: 16, background: "#ecfeff" }}>
-                                            <div style={{ fontSize: 12, color: "#64748b" }}>Thumb Kiss</div>
-                                            <div style={{ marginTop: 8, fontSize: 22, fontWeight: 700 }}>
-                                                {kissCount}
-                                            </div>
+                                            <div style={{ fontSize: 12, color: "#64748b" }}>{t.thumbTitle}</div>
+                                            <div style={{ marginTop: 8, fontSize: 22, fontWeight: 700 }}>{kissCount}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -2051,7 +2446,7 @@ export default function App() {
                         {activeTab === "chat" && (
                             <div style={{ display: "grid", gap: 16, gridTemplateColumns: "1fr 300px" }}>
                                 <div style={panelStyle({ padding: 24 })}>
-                                    <h2 style={{ marginTop: 0 }}>Canlı chat</h2>
+                                    <h2 style={{ marginTop: 0 }}>{t.chatTitle}</h2>
 
                                     <div
                                         style={{
@@ -2065,7 +2460,7 @@ export default function App() {
                                         }}
                                     >
                                         {messages.length === 0 ? (
-                                            <p style={{ color: "#64748b" }}>Henüz mesaj yok</p>
+                                            <p style={{ color: "#64748b" }}>{t.noMessages}</p>
                                         ) : (
                                             messages.map((msg) => (
                                                 <div
@@ -2082,9 +2477,7 @@ export default function App() {
                                                     }}
                                                 >
                                                     <div>{msg.body}</div>
-                                                    <div style={{ marginTop: 6, fontSize: 11, opacity: 0.7 }}>
-                                                        {msg.created_at}
-                                                    </div>
+                                                    <div style={{ marginTop: 6, fontSize: 11, opacity: 0.7 }}>{msg.created_at}</div>
                                                 </div>
                                             ))
                                         )}
@@ -2101,7 +2494,7 @@ export default function App() {
                                                     boxShadow: "0 6px 20px rgba(15,23,42,0.06)",
                                                 }}
                                             >
-                                                Partner yazıyor...
+                                                {t.partnerIsTyping}
                                             </div>
                                         )}
                                     </div>
@@ -2109,7 +2502,7 @@ export default function App() {
                                     <div style={{ display: "flex", gap: 12 }}>
                                         <input
                                             type="text"
-                                            placeholder="mesaj yaz"
+                                            placeholder={t.messagePlaceholder}
                                             value={draft}
                                             onChange={(e) => {
                                                 void handleDraftChange(e.target.value);
@@ -2120,17 +2513,17 @@ export default function App() {
                                             style={inputStyle()}
                                         />
                                         <button onClick={() => void sendMessage()} style={buttonStyle("#f43f5e")}>
-                                            Gönder
+                                            {t.send}
                                         </button>
                                     </div>
                                 </div>
 
                                 <div style={panelStyle({ padding: 24 })}>
-                                    <h2 style={{ marginTop: 0 }}>Oda özeti</h2>
+                                    <h2 style={{ marginTop: 0 }}>{t.roomSummary}</h2>
                                     <div style={{ display: "grid", gap: 12 }}>
-                                        <Stat label="Oda" value={joinedRoomCode || "-"} />
-                                        <Stat label="Mesaj" value={String(messages.length)} />
-                                        <Stat label="Typing" value={partnerTyping ? "Aktif" : "Pasif"} />
+                                        <Stat label={t.summaryRoom} value={joinedRoomCode || "-"} />
+                                        <Stat label={t.statMessages} value={String(messages.length)} />
+                                        <Stat label={t.summaryTyping} value={partnerTyping ? t.active : t.passive} />
                                     </div>
                                 </div>
                             </div>
@@ -2147,7 +2540,7 @@ export default function App() {
                                         }),
                                     }}
                                 >
-                                    <h2 style={{ marginTop: 0 }}>Thumb Kiss</h2>
+                                    <h2 style={{ marginTop: 0 }}>{t.thumbTitle}</h2>
 
                                     <button
                                         onClick={() => void sendThumbKiss()}
@@ -2165,17 +2558,15 @@ export default function App() {
                                         💗
                                     </button>
 
-                                    <div style={{ marginTop: 20, fontSize: 22, fontWeight: 700 }}>
-                                        {kissState}
-                                    </div>
+                                    <div style={{ marginTop: 20, fontSize: 22, fontWeight: 700 }}>{kissState}</div>
                                 </div>
 
                                 <div style={panelStyle({ padding: 24 })}>
-                                    <h2 style={{ marginTop: 0 }}>Bağ paneli</h2>
+                                    <h2 style={{ marginTop: 0 }}>{t.bondPanel}</h2>
                                     <div style={{ display: "grid", gap: 12 }}>
-                                        <Stat label="Durum" value={kissState} />
-                                        <Stat label="Toplam" value={String(kissCount)} />
-                                        <Stat label="Oda" value={joinedRoomCode || "-"} />
+                                        <Stat label={t.state} value={kissState} />
+                                        <Stat label={t.total} value={String(kissCount)} />
+                                        <Stat label={t.summaryRoom} value={joinedRoomCode || "-"} />
                                     </div>
                                 </div>
                             </div>
@@ -2184,10 +2575,10 @@ export default function App() {
                         {activeTab === "pet" && (
                             <div style={{ display: "grid", gap: 16 }}>
                                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                                    {renderPetRoomButton("living", "Salon")}
-                                    {renderPetRoomButton("kitchen", "Mutfak")}
-                                    {renderPetRoomButton("bathroom", "Banyo")}
-                                    {renderPetRoomButton("bedroom", "Yatak Odası")}
+                                    {renderPetRoomButton("living", t.petLiving)}
+                                    {renderPetRoomButton("kitchen", t.petKitchen)}
+                                    {renderPetRoomButton("bathroom", t.petBathroom)}
+                                    {renderPetRoomButton("bedroom", t.petBedroom)}
                                 </div>
 
                                 <div style={{ display: "grid", gap: 16, gridTemplateColumns: "1fr 340px" }}>
@@ -2259,9 +2650,10 @@ export default function App() {
                                             style={{
                                                 position: "absolute",
                                                 left: PET_CENTER_X - PET_RADIUS,
-                                                top: petSleeping
-                                                    ? 236
-                                                    : PET_CENTER_Y - PET_RADIUS + Math.sin(petBounce / 2) * 3,
+                                                top:
+                                                    petSleeping
+                                                        ? 236
+                                                        : PET_CENTER_Y - PET_RADIUS + Math.sin(petBounce / 2) * 3,
                                                 width: PET_RADIUS * 2,
                                                 height: PET_RADIUS * 2,
                                                 borderRadius: "999px",
@@ -2487,7 +2879,13 @@ export default function App() {
                                                     zIndex: 20,
                                                 }}
                                             >
-                                                {foodDrag.item.emoji}
+                                                {foodDrag.item.id === "apple"
+                                                    ? "🍎"
+                                                    : foodDrag.item.id === "cookie"
+                                                        ? "🍪"
+                                                        : foodDrag.item.id === "carrot"
+                                                            ? "🥕"
+                                                            : "🍰"}
                                             </div>
                                         )}
 
@@ -2549,7 +2947,7 @@ export default function App() {
                                                         zIndex: 10,
                                                     }}
                                                 >
-                                                    Sabun
+                                                    {t.soap}
                                                 </div>
 
                                                 <div
@@ -2578,7 +2976,7 @@ export default function App() {
                                                         zIndex: 10,
                                                     }}
                                                 >
-                                                    Duş
+                                                    {t.shower}
                                                 </div>
                                             </>
                                         )}
@@ -2628,7 +3026,14 @@ export default function App() {
                                                             touchAction: "none",
                                                         }}
                                                     >
-                                                        {item.emoji} {item.label}
+                                                        {item.id === "apple"
+                                                            ? "🍎"
+                                                            : item.id === "cookie"
+                                                                ? "🍪"
+                                                                : item.id === "carrot"
+                                                                    ? "🥕"
+                                                                    : "🍰"}{" "}
+                                                        {foodLabel(item.id)}
                                                     </button>
                                                 ))}
                                             </div>
@@ -2637,51 +3042,43 @@ export default function App() {
 
                                     <div style={{ display: "grid", gap: 16 }}>
                                         <div style={panelStyle()}>
-                                            <h3 style={{ marginTop: 0 }}>Ortak pet durumu</h3>
+                                            <h3 style={{ marginTop: 0 }}>{t.petSharedStatus}</h3>
                                             <div style={{ display: "grid", gap: 12 }}>
-                                                <PetBar label="Açlık" value={petStats.hunger} color="#f97316" />
-                                                <PetBar label="Enerji" value={petStats.energy} color="#6366f1" />
-                                                <PetBar label="Temizlik" value={petStats.cleanliness} color="#06b6d4" />
-                                                <PetBar label="Mutluluk" value={petStats.happiness} color="#f43f5e" />
+                                                <PetBar label={t.petHunger} value={petStats.hunger} color="#f97316" />
+                                                <PetBar label={t.petEnergy} value={petStats.energy} color="#6366f1" />
+                                                <PetBar label={t.petCleanliness} value={petStats.cleanliness} color="#06b6d4" />
+                                                <PetBar label={t.petHappiness} value={petStats.happiness} color="#f43f5e" />
                                             </div>
                                         </div>
 
                                         {petRoom === "living" && (
                                             <div style={panelStyle()}>
-                                                <h3 style={{ marginTop: 0 }}>Salon</h3>
-                                                <p style={{ color: "#64748b", marginTop: 0 }}>
-                                                    Topu kim oynatırsa diğer tarafta da aynı anda görünür.
-                                                </p>
+                                                <h3 style={{ marginTop: 0 }}>{t.petLiving}</h3>
+                                                <p style={{ color: "#64748b", marginTop: 0 }}>{t.livingDesc}</p>
                                             </div>
                                         )}
 
                                         {petRoom === "kitchen" && (
                                             <div style={panelStyle()}>
-                                                <h3 style={{ marginTop: 0 }}>Mutfak</h3>
-                                                <p style={{ color: "#64748b", marginTop: 0 }}>
-                                                    Biriniz yedirince ikinizde de aynı pet doyar.
-                                                </p>
+                                                <h3 style={{ marginTop: 0 }}>{t.petKitchen}</h3>
+                                                <p style={{ color: "#64748b", marginTop: 0 }}>{t.kitchenDesc}</p>
                                             </div>
                                         )}
 
                                         {petRoom === "bathroom" && (
                                             <div style={panelStyle()}>
-                                                <h3 style={{ marginTop: 0 }}>Banyo</h3>
-                                                <p style={{ color: "#64748b", marginTop: 0 }}>
-                                                    Köpük ve temizlik de oda genelinde ortaktır.
-                                                </p>
+                                                <h3 style={{ marginTop: 0 }}>{t.petBathroom}</h3>
+                                                <p style={{ color: "#64748b", marginTop: 0 }}>{t.bathroomDesc}</p>
                                                 <div style={{ color: "#475569", fontSize: 14 }}>
-                                                    Köpük: {foamPoints.length} • Kir: {dirtySpots.length}
+                                                    {t.bubbleCount}: {foamPoints.length} • {t.dirtCount}: {dirtySpots.length}
                                                 </div>
                                             </div>
                                         )}
 
                                         {petRoom === "bedroom" && (
                                             <div style={panelStyle()}>
-                                                <h3 style={{ marginTop: 0 }}>Yatak odası</h3>
-                                                <p style={{ color: "#64748b", marginTop: 0 }}>
-                                                    Işığı kapatınca iki tarafta da uyur.
-                                                </p>
+                                                <h3 style={{ marginTop: 0 }}>{t.petBedroom}</h3>
+                                                <p style={{ color: "#64748b", marginTop: 0 }}>{t.bedroomDesc}</p>
                                                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                                                     <button
                                                         onClick={() => {
@@ -2692,17 +3089,20 @@ export default function App() {
                                                         }}
                                                         style={buttonStyle(lightsOff ? "#6366f1" : "#111827")}
                                                     >
-                                                        {lightsOff ? "Işığı aç" : "Işığı kapat"}
+                                                        {lightsOff ? t.lightsOn : t.lightsOff}
                                                     </button>
                                                 </div>
                                             </div>
                                         )}
 
                                         <div style={panelStyle()}>
-                                            <h3 style={{ marginTop: 0 }}>Senkron</h3>
-                                            <div style={{ color: "#475569", fontSize: 14 }}>
-                                                Odaya girince pet state karşı taraftan çekilir ve değişiklikler canlı yayılır.
-                                            </div>
+                                            <h3 style={{ marginTop: 0 }}>{t.moodTitle}</h3>
+                                            <div style={{ color: "#475569" }}>{moodText()}</div>
+                                        </div>
+
+                                        <div style={panelStyle()}>
+                                            <h3 style={{ marginTop: 0 }}>{t.syncTitle}</h3>
+                                            <div style={{ color: "#475569", fontSize: 14 }}>{t.syncDesc}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -2712,9 +3112,9 @@ export default function App() {
                         {activeTab === "games" && (
                             <div style={{ display: "grid", gap: 16 }}>
                                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                                    {renderGamesTabButton("pixelpaint", "Pixel Paint")}
-                                    {renderGamesTabButton("tictactoe", "Tic Tac Toe")}
-                                    {renderGamesTabButton("connect4", "Four in a Row")}
+                                    {renderGamesTabButton("pixelpaint", t.gamesPixel)}
+                                    {renderGamesTabButton("tictactoe", t.gamesTic)}
+                                    {renderGamesTabButton("connect4", t.gamesConnect)}
                                 </div>
 
                                 {gamesTab === "pixelpaint" && (
@@ -2730,33 +3130,25 @@ export default function App() {
                                             }}
                                         >
                                             <div>
-                                                <h2 style={{ margin: 0 }}>Pixel Paint</h2>
-                                                <p style={{ marginTop: 8, color: "#64748b" }}>
-                                                    Canvas tabanlı 200 x 200 ortak çizim tahtası
-                                                </p>
+                                                <h2 style={{ margin: 0 }}>{t.gamesPixel}</h2>
+                                                <p style={{ marginTop: 8, color: "#64748b" }}>{t.pixelDesc}</p>
                                             </div>
 
                                             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                                                 <button
                                                     onClick={() => setBrushSize(1)}
-                                                    style={buttonStyle(
-                                                        brushSize === 1 ? "#111827" : "#e5e7eb",
-                                                        brushSize === 1 ? "#fff" : "#111827"
-                                                    )}
+                                                    style={buttonStyle(brushSize === 1 ? "#111827" : "#e5e7eb", brushSize === 1 ? "#fff" : "#111827")}
                                                 >
                                                     1px
                                                 </button>
                                                 <button
                                                     onClick={() => setBrushSize(2)}
-                                                    style={buttonStyle(
-                                                        brushSize === 2 ? "#111827" : "#e5e7eb",
-                                                        brushSize === 2 ? "#fff" : "#111827"
-                                                    )}
+                                                    style={buttonStyle(brushSize === 2 ? "#111827" : "#e5e7eb", brushSize === 2 ? "#fff" : "#111827")}
                                                 >
                                                     2px
                                                 </button>
                                                 <button onClick={() => void clearBoard()} style={buttonStyle("#111827")}>
-                                                    Board temizle
+                                                    {t.clearBoard}
                                                 </button>
                                             </div>
                                         </div>
@@ -2770,10 +3162,7 @@ export default function App() {
                                                         width: 34,
                                                         height: 34,
                                                         borderRadius: 10,
-                                                        border:
-                                                            selectedPaintColor === color
-                                                                ? "3px solid #111827"
-                                                                : "1px solid #cbd5e1",
+                                                        border: selectedPaintColor === color ? "3px solid #111827" : "1px solid #cbd5e1",
                                                         background: color,
                                                         cursor: "pointer",
                                                     }}
@@ -2836,14 +3225,12 @@ export default function App() {
                                             }}
                                         >
                                             <div>
-                                                <h2 style={{ margin: 0 }}>Tic Tac Toe</h2>
-                                                <p style={{ marginTop: 8, color: "#64748b" }}>
-                                                    Canlı 2 oyunculu oyun
-                                                </p>
+                                                <h2 style={{ margin: 0 }}>{t.gamesTic}</h2>
+                                                <p style={{ marginTop: 8, color: "#64748b" }}>{t.liveTwoPlayer}</p>
                                             </div>
 
                                             <button onClick={() => void resetTicGame()} style={buttonStyle("#111827")}>
-                                                Oyunu sıfırla
+                                                {t.resetGame}
                                             </button>
                                         </div>
 
@@ -2891,16 +3278,16 @@ export default function App() {
                                             </div>
 
                                             <div style={{ display: "grid", gap: 12 }}>
-                                                <Stat label="Senin sembolün" value={ticMySymbol} />
-                                                <Stat label="Sıra / sonuç" value={ticStatusText()} />
+                                                <Stat label={t.mySymbol} value={ticMySymbol} />
+                                                <Stat label={t.turnResult} value={ticStatusText()} />
                                                 <Stat
-                                                    label="Hamle hakkı"
+                                                    label={t.moveRight}
                                                     value={
                                                         !ticWinner && ticTurn === ticMySymbol
-                                                            ? "Sende"
+                                                            ? t.yourTurn
                                                             : ticWinner
-                                                                ? "Bitti"
-                                                                : "Partnerde"
+                                                                ? t.finished
+                                                                : t.partnerTurn
                                                     }
                                                 />
                                             </div>
@@ -2921,14 +3308,12 @@ export default function App() {
                                             }}
                                         >
                                             <div>
-                                                <h2 style={{ margin: 0 }}>Four in a Row</h2>
-                                                <p style={{ marginTop: 8, color: "#64748b" }}>
-                                                    Canlı 2 oyunculu bağlantı oyunu
-                                                </p>
+                                                <h2 style={{ margin: 0 }}>{t.gamesConnect}</h2>
+                                                <p style={{ marginTop: 8, color: "#64748b" }}>{t.liveConnectDesc}</p>
                                             </div>
 
                                             <button onClick={() => void resetConnectGame()} style={buttonStyle("#111827")}>
-                                                Oyunu sıfırla
+                                                {t.resetGame}
                                             </button>
                                         </div>
 
@@ -3004,16 +3389,16 @@ export default function App() {
                                             </div>
 
                                             <div style={{ display: "grid", gap: 12 }}>
-                                                <Stat label="Senin sembolün" value={connectMySymbol} />
-                                                <Stat label="Sıra / sonuç" value={connectStatusText()} />
+                                                <Stat label={t.mySymbol} value={connectMySymbol} />
+                                                <Stat label={t.turnResult} value={connectStatusText()} />
                                                 <Stat
-                                                    label="Hamle hakkı"
+                                                    label={t.moveRight}
                                                     value={
                                                         !connectWinner && connectTurn === connectMySymbol
-                                                            ? "Sende"
+                                                            ? t.yourTurn
                                                             : connectWinner
-                                                                ? "Bitti"
-                                                                : "Partnerde"
+                                                                ? t.finished
+                                                                : t.partnerTurn
                                                     }
                                                 />
                                             </div>
@@ -3026,11 +3411,11 @@ export default function App() {
                         {activeTab === "profile" && (
                             <div style={{ display: "grid", gap: 16, gridTemplateColumns: "0.95fr 1.05fr" }}>
                                 <div style={panelStyle({ padding: 24 })}>
-                                    <h2 style={{ marginTop: 0 }}>Profil</h2>
+                                    <h2 style={{ marginTop: 0 }}>{t.profileTitle}</h2>
 
                                     <input
                                         type="text"
-                                        placeholder="adın"
+                                        placeholder={t.namePlaceholder}
                                         value={displayName}
                                         onChange={(e) => setDisplayName(e.target.value)}
                                         style={{ ...inputStyle(), marginBottom: 12 }}
@@ -3066,9 +3451,7 @@ export default function App() {
                                                     height: 44,
                                                     borderRadius: 14,
                                                     border:
-                                                        avatarColor === color
-                                                            ? "3px solid #111827"
-                                                            : "2px solid transparent",
+                                                        avatarColor === color ? "3px solid #111827" : "2px solid transparent",
                                                     background: color,
                                                     cursor: "pointer",
                                                 }}
@@ -3077,7 +3460,7 @@ export default function App() {
                                     </div>
 
                                     <button onClick={() => void saveProfile()} style={buttonStyle("#f43f5e")}>
-                                        Profili kaydet
+                                        {t.saveProfile}
                                     </button>
                                 </div>
 
@@ -3089,7 +3472,7 @@ export default function App() {
                                         }),
                                     }}
                                 >
-                                    <h2 style={{ marginTop: 0 }}>Önizleme</h2>
+                                    <h2 style={{ marginTop: 0 }}>{t.previewTitle}</h2>
 
                                     <div
                                         style={{
@@ -3118,11 +3501,9 @@ export default function App() {
 
                                         <div>
                                             <div style={{ fontSize: 20, fontWeight: 700 }}>
-                                                {displayName || "İsmini yaz"}
+                                                {displayName || t.profilePreviewName}
                                             </div>
-                                            <div style={{ color: "#64748b", fontSize: 14 }}>
-                                                {userEmail || "mail yok"}
-                                            </div>
+                                            <div style={{ color: "#64748b", fontSize: 14 }}>{userEmail || t.noMail}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -3131,7 +3512,7 @@ export default function App() {
 
                         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20 }}>
                             <button onClick={() => void signOut()} style={buttonStyle("#ffffff", "#374151")}>
-                                Çıkış yap
+                                {t.signOut}
                             </button>
                         </div>
                     </>
