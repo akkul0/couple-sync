@@ -223,7 +223,8 @@ const translations = {
         lightsOn: "Işığı aç",
 
         syncTitle: "Senkron",
-        syncDesc: "Odaya girince pet state karşı taraftan çekilir ve değişiklikler canlı yayılır.",
+        syncDesc:
+            "Odaya girince pet state karşı taraftan çekilir ve değişiklikler canlı yayılır.",
 
         moodTitle: "Ruh hali",
         moodSleeping: "Uyuyor",
@@ -329,7 +330,8 @@ const translations = {
         tabProfile: "Профиль",
 
         loginTitle: "Вход / Регистрация",
-        loginSubtitle: "Подключитесь к партнёру по одному коду комнаты и войдите вместе.",
+        loginSubtitle:
+            "Подключитесь к партнёру по одному коду комнаты и войдите вместе.",
         emailPlaceholder: "твоя почта",
         passwordPlaceholder: "пароль",
         signUp: "Регистрация",
@@ -379,7 +381,8 @@ const translations = {
         petHappiness: "Счастье",
 
         livingDesc: "Если кто-то катает мяч, он одновременно виден и у другого.",
-        kitchenDesc: "Если один кормит, питомец становится сытым у вас обоих.",
+        kitchenDesc:
+            "Если один кормит, питомец становится сытым у вас обоих.",
         bathroomDesc: "Пена и чистота тоже общие для комнаты.",
         bedroomDesc: "Если выключить свет, он уснёт у вас обоих.",
 
@@ -390,7 +393,8 @@ const translations = {
         lightsOn: "Включить свет",
 
         syncTitle: "Синхронизация",
-        syncDesc: "При входе в комнату состояние питомца запрашивается у второй стороны и далее обновляется в реальном времени.",
+        syncDesc:
+            "При входе в комнату состояние питомца запрашивается у второй стороны и далее обновляется в реальном времени.",
 
         moodTitle: "Настроение",
         moodSleeping: "Спит",
@@ -668,7 +672,7 @@ function PetBar(props: { label: string; value: number; color: string }) {
 }
 
 export default function App() {
-    const initialLang =
+    const initialLang: Language =
         (typeof window !== "undefined"
             ? (localStorage.getItem(LANGUAGE_STORAGE_KEY) as Language | null)
             : null) || "tr";
@@ -678,7 +682,9 @@ export default function App() {
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [status, setStatus] = useState(t.statusNotLoggedIn);
+    const [status, setStatus] = useState<string>(
+        translations[initialLang].statusNotLoggedIn
+    );
     const [activeTab, setActiveTab] = useState<TabKey>("home");
     const [gamesTab, setGamesTab] = useState<GameTabKey>("pixelpaint");
 
@@ -696,7 +702,9 @@ export default function App() {
     const [messages, setMessages] = useState<MessageRow[]>([]);
     const [draft, setDraft] = useState("");
     const [partnerTyping, setPartnerTyping] = useState(false);
-    const [kissState, setKissState] = useState(t.statusKissReady);
+    const [kissState, setKissState] = useState<string>(
+        translations[initialLang].statusKissReady
+    );
     const [kissCount, setKissCount] = useState(0);
 
     const [selectedPaintColor, setSelectedPaintColor] = useState("#f43f5e");
@@ -709,9 +717,13 @@ export default function App() {
     const [ticWinner, setTicWinner] = useState<TicPlayer | "draw" | null>(null);
     const [ticMySymbol, setTicMySymbol] = useState<TicPlayer>("X");
 
-    const [connectBoard, setConnectBoard] = useState<ConnectCell[][]>(getEmptyConnectBoard());
+    const [connectBoard, setConnectBoard] = useState<ConnectCell[][]>(
+        getEmptyConnectBoard()
+    );
     const [connectTurn, setConnectTurn] = useState<ConnectPlayer>("X");
-    const [connectWinner, setConnectWinner] = useState<ConnectPlayer | "draw" | null>(null);
+    const [connectWinner, setConnectWinner] = useState<
+        ConnectPlayer | "draw" | null
+    >(null);
     const [connectMySymbol, setConnectMySymbol] = useState<ConnectPlayer>("X");
 
     const [petRoom, setPetRoom] = useState<PetRoom>("living");
@@ -755,7 +767,10 @@ export default function App() {
     });
 
     const [dragMode, setDragMode] = useState<DragMode>(null);
-    const [ballReleaseStart, setBallReleaseStart] = useState<{ x: number; y: number } | null>(null);
+    const [ballReleaseStart, setBallReleaseStart] = useState<{
+        x: number;
+        y: number;
+    } | null>(null);
 
     const [eyeLookX, setEyeLookX] = useState(0);
     const [eyeLookY, setEyeLookY] = useState(0);
@@ -788,50 +803,6 @@ export default function App() {
 
     useEffect(() => {
         localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
-        setKissState((prev) => {
-            if (
-                prev === translations.tr.statusKissReady ||
-                prev === translations.ru.statusKissReady
-            ) {
-                return translations[language].statusKissReady;
-            }
-            if (
-                prev === translations.tr.statusKissTouched ||
-                prev === translations.ru.statusKissTouched
-            ) {
-                return translations[language].statusKissTouched;
-            }
-            if (
-                prev === translations.tr.statusKissConnected ||
-                prev === translations.ru.statusKissConnected
-            ) {
-                return translations[language].statusKissConnected;
-            }
-            return prev;
-        });
-
-        setStatus((prev) => {
-            const known = [
-                translations.tr.statusNotLoggedIn,
-                translations.ru.statusNotLoggedIn,
-                translations.tr.statusSignedIn,
-                translations.ru.statusSignedIn,
-                translations.tr.statusLoggedOut,
-                translations.ru.statusLoggedOut,
-            ];
-            if (known.includes(prev)) {
-                if (prev === translations.tr.statusNotLoggedIn || prev === translations.ru.statusNotLoggedIn) {
-                    return translations[language].statusNotLoggedIn;
-                }
-                if (prev === translations.tr.statusSignedIn || prev === translations.ru.statusSignedIn) {
-                    return translations[language].statusSignedIn;
-                }
-                if (prev === translations.tr.statusLoggedOut || prev === translations.ru.statusLoggedOut) {
-                    return translations[language].statusLoggedOut;
-                }
-            }
-            return prev;
-        });
     }, [language]);
 
     function foodLabel(foodId: FoodId): string {
@@ -914,7 +885,9 @@ export default function App() {
             if (!audioCtxRef.current) {
                 const Ctx =
                     window.AudioContext ||
-                    (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+                    (window as typeof window & {
+                        webkitAudioContext?: typeof AudioContext;
+                    }).webkitAudioContext;
                 if (!Ctx) return;
                 audioCtxRef.current = new Ctx();
             }
@@ -933,8 +906,10 @@ export default function App() {
             gainNode.connect(ctx.destination);
 
             oscillator.start();
-
-            gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+            gainNode.gain.exponentialRampToValueAtTime(
+                0.0001,
+                ctx.currentTime + duration
+            );
             oscillator.stop(ctx.currentTime + duration);
         } catch {
             //
@@ -1082,7 +1057,9 @@ export default function App() {
                 cleanliness: clamp(prev.cleanliness - 0.35),
                 happiness: clamp(
                     prev.happiness -
-                    (prev.hunger < 30 || prev.cleanliness < 30 || prev.energy < 25 ? 0.5 : 0.18)
+                    (prev.hunger < 30 || prev.cleanliness < 30 || prev.energy < 25
+                        ? 0.5
+                        : 0.18)
                 ),
             }));
         }, 2500);
@@ -1123,7 +1100,9 @@ export default function App() {
                     vx *= 0.985;
                 }
 
-                const nearPet = Math.abs(x - (PET_CENTER_X - 14)) < 80 && Math.abs(y - (PET_CENTER_Y + 40)) < 110;
+                const nearPet =
+                    Math.abs(x - (PET_CENTER_X - 14)) < 80 &&
+                    Math.abs(y - (PET_CENTER_Y + 40)) < 110;
 
                 if (nearPet) {
                     setPetStats((p) => ({
@@ -1222,7 +1201,12 @@ export default function App() {
             if (Number.isNaN(r) || Number.isNaN(c)) continue;
 
             ctx.fillStyle = color;
-            ctx.fillRect(c * pixelSize + 1, r * pixelSize + 1, pixelSize - 1, pixelSize - 1);
+            ctx.fillRect(
+                c * pixelSize + 1,
+                r * pixelSize + 1,
+                pixelSize - 1,
+                pixelSize - 1
+            );
         }
     }
 
@@ -1283,7 +1267,7 @@ export default function App() {
             .on("broadcast", { event: "thumbkiss" }, ({ payload }: any) => {
                 if (!payload || payload.senderId === userId) return;
 
-                setKissState(t.statusKissConnected);
+                setKissState(translations[language].statusKissConnected);
                 setKissCount((prev) => prev + 1);
 
                 if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
@@ -1293,7 +1277,7 @@ export default function App() {
                 }
 
                 kissTimerRef.current = window.setTimeout(() => {
-                    setKissState(t.statusKissReady);
+                    setKissState(translations[language].statusKissReady);
                 }, 1800);
             })
             .on("broadcast", { event: "paint_pixel" }, ({ payload }: any) => {
@@ -1432,11 +1416,11 @@ export default function App() {
 
     async function sendThumbKiss(): Promise<void> {
         if (!roomChannelRef.current || !joinedRoomId || !userId) {
-            setStatus(t.statusNeedRoom);
+            setStatus(translations[language].statusNeedRoom);
             return;
         }
 
-        setKissState(t.statusKissTouched);
+        setKissState(translations[language].statusKissTouched);
         setKissCount((prev) => prev + 1);
 
         if (navigator.vibrate) navigator.vibrate(90);
@@ -1452,7 +1436,7 @@ export default function App() {
         }
 
         kissTimerRef.current = window.setTimeout(() => {
-            setKissState(t.statusKissReady);
+            setKissState(translations[language].statusKissReady);
         }, 1200);
     }
 
@@ -1483,7 +1467,7 @@ export default function App() {
 
     async function paintAt(row: number, col: number): Promise<void> {
         if (!roomChannelRef.current || !joinedRoomId || !userId) {
-            setStatus(t.statusNeedRoom);
+            setStatus(translations[language].statusNeedRoom);
             return;
         }
 
@@ -1524,7 +1508,7 @@ export default function App() {
 
     async function clearBoard(): Promise<void> {
         if (!roomChannelRef.current || !joinedRoomId || !userId) {
-            setStatus(t.statusNeedRoom);
+            setStatus(translations[language].statusNeedRoom);
             return;
         }
 
@@ -1539,14 +1523,14 @@ export default function App() {
 
     async function makeTicMove(index: number): Promise<void> {
         if (!roomChannelRef.current || !joinedRoomId || !userId) {
-            setStatus(t.statusNeedRoom);
+            setStatus(translations[language].statusNeedRoom);
             return;
         }
 
         if (ticWinner) return;
         if (ticBoard[index] !== null) return;
         if (ticTurn !== ticMySymbol) {
-            setStatus(t.notYourTurn);
+            setStatus(translations[language].notYourTurn);
             return;
         }
 
@@ -1578,7 +1562,7 @@ export default function App() {
 
     async function resetTicGame(): Promise<void> {
         if (!roomChannelRef.current || !joinedRoomId || !userId) {
-            setStatus(t.statusNeedRoom);
+            setStatus(translations[language].statusNeedRoom);
             return;
         }
 
@@ -1595,13 +1579,13 @@ export default function App() {
 
     async function makeConnectMove(col: number): Promise<void> {
         if (!roomChannelRef.current || !joinedRoomId || !userId) {
-            setStatus(t.statusNeedRoom);
+            setStatus(translations[language].statusNeedRoom);
             return;
         }
 
         if (connectWinner) return;
         if (connectTurn !== connectMySymbol) {
-            setStatus(t.notYourTurn);
+            setStatus(translations[language].notYourTurn);
             return;
         }
 
@@ -1636,7 +1620,7 @@ export default function App() {
 
     async function resetConnectGame(): Promise<void> {
         if (!roomChannelRef.current || !joinedRoomId || !userId) {
-            setStatus(t.statusNeedRoom);
+            setStatus(translations[language].statusNeedRoom);
             return;
         }
 
@@ -1663,7 +1647,12 @@ export default function App() {
     }
 
     function isNearMouth(x: number, y: number) {
-        return x > PET_CENTER_X - 38 && x < PET_CENTER_X + 38 && y > PET_CENTER_Y + 6 && y < PET_CENTER_Y + 52;
+        return (
+            x > PET_CENTER_X - 38 &&
+            x < PET_CENTER_X + 38 &&
+            y > PET_CENTER_Y + 6 &&
+            y < PET_CENTER_Y + 52
+        );
     }
 
     function handleGlobalDragMove(clientX: number, clientY: number) {
@@ -1780,7 +1769,7 @@ export default function App() {
                         cleanliness: prev.cleanliness,
                         happiness: clamp(prev.happiness + eatenItem.happiness),
                     }));
-                    setStatus(`${foodLabel(eatenItem.id)} ${t.foodFedSuffix}`);
+                    setStatus(`${foodLabel(eatenItem.id)} ${translations[language].foodFedSuffix}`);
                 }, 450);
 
                 window.setTimeout(() => {
@@ -1794,7 +1783,12 @@ export default function App() {
             }
         }
 
-        if (dragMode === "ball" && ballReleaseStart && clientX !== undefined && clientY !== undefined) {
+        if (
+            dragMode === "ball" &&
+            ballReleaseStart &&
+            clientX !== undefined &&
+            clientY !== undefined
+        ) {
             const dx = clientX - ballReleaseStart.x;
             const dy = clientY - ballReleaseStart.y;
 
@@ -1843,7 +1837,7 @@ export default function App() {
             window.removeEventListener("touchmove", onTouchMove);
             window.removeEventListener("touchend", onTouchEnd);
         };
-    }, [dragMode, foodDrag, ballReleaseStart]);
+    }, [dragMode, foodDrag, ballReleaseStart, language]);
 
     async function checkUser(): Promise<void> {
         const {
@@ -1852,7 +1846,7 @@ export default function App() {
         } = await supabase.auth.getUser();
 
         if (error) {
-            setStatus(t.authCheckError + error.message);
+            setStatus(translations[language].authCheckError + error.message);
             return;
         }
 
@@ -1862,53 +1856,53 @@ export default function App() {
             setJoinedRoomCode("");
             setJoinedRoomId("");
             setMessages([]);
-            setStatus(t.statusNotLoggedIn);
+            setStatus(translations[language].statusNotLoggedIn);
             return;
         }
 
         setUserId(user.id);
         setUserEmail(user.email || "");
-        setStatus(t.statusSignedIn);
+        setStatus(translations[language].statusSignedIn);
         await loadProfile(user.id);
     }
 
     async function signUp(): Promise<void> {
         if (!email || !password) {
-            setStatus(t.statusNeedEmailPassword);
+            setStatus(translations[language].statusNeedEmailPassword);
             return;
         }
 
         const { error } = await supabase.auth.signUp({ email, password });
 
         if (error) {
-            setStatus(t.signupError + error.message);
+            setStatus(translations[language].signupError + error.message);
             return;
         }
 
-        setStatus(t.statusSignupOk);
+        setStatus(translations[language].statusSignupOk);
     }
 
     async function signIn(): Promise<void> {
         if (!email || !password) {
-            setStatus(t.statusNeedEmailPassword);
+            setStatus(translations[language].statusNeedEmailPassword);
             return;
         }
 
         const { error } = await supabase.auth.signInWithPassword({ email, password });
 
         if (error) {
-            setStatus(t.signinError + error.message);
+            setStatus(translations[language].signinError + error.message);
             return;
         }
 
-        setStatus(t.statusSignedIn);
+        setStatus(translations[language].statusSignedIn);
     }
 
     async function signOut(): Promise<void> {
         const { error } = await supabase.auth.signOut();
 
         if (error) {
-            setStatus(t.signoutError + error.message);
+            setStatus(translations[language].signoutError + error.message);
             return;
         }
 
@@ -1925,7 +1919,7 @@ export default function App() {
         setConnectBoard(getEmptyConnectBoard());
         setConnectTurn("X");
         setConnectWinner(null);
-        setStatus(t.statusLoggedOut);
+        setStatus(translations[language].statusLoggedOut);
     }
 
     async function loadProfile(id: string): Promise<void> {
@@ -1945,7 +1939,7 @@ export default function App() {
 
     async function saveProfile(): Promise<void> {
         if (!userId) {
-            setStatus(t.statusNeedLogin);
+            setStatus(translations[language].statusNeedLogin);
             return;
         }
 
@@ -1957,16 +1951,16 @@ export default function App() {
         });
 
         if (error) {
-            setStatus(t.saveProfileError + error.message);
+            setStatus(translations[language].saveProfileError + error.message);
             return;
         }
 
-        setStatus(t.statusSavedProfile);
+        setStatus(translations[language].statusSavedProfile);
     }
 
     async function createRoom(): Promise<void> {
         if (!userId) {
-            setStatus(t.statusNeedLogin);
+            setStatus(translations[language].statusNeedLogin);
             return;
         }
 
@@ -1979,7 +1973,7 @@ export default function App() {
             .single();
 
         if (roomError) {
-            setStatus(t.roomCreateError + roomError.message);
+            setStatus(translations[language].roomCreateError + roomError.message);
             return;
         }
 
@@ -1989,7 +1983,7 @@ export default function App() {
         );
 
         if (memberError) {
-            setStatus(t.roomAddSelfError + memberError.message);
+            setStatus(translations[language].roomAddSelfError + memberError.message);
             return;
         }
 
@@ -2007,19 +2001,19 @@ export default function App() {
         setConnectWinner(null);
         setConnectMySymbol("X");
         setActiveTab("chat");
-        setStatus(`${t.statusRoomCreated} ${code}`);
+        setStatus(`${translations[language].statusRoomCreated} ${code}`);
     }
 
     async function joinRoom(): Promise<void> {
         if (!userId) {
-            setStatus(t.statusNeedLogin);
+            setStatus(translations[language].statusNeedLogin);
             return;
         }
 
         const cleanCode = roomCodeInput.trim().toUpperCase();
 
         if (!cleanCode) {
-            setStatus(t.statusNeedRoomCode);
+            setStatus(translations[language].statusNeedRoomCode);
             return;
         }
 
@@ -2030,7 +2024,7 @@ export default function App() {
             .single();
 
         if (roomError || !room) {
-            setStatus(t.statusRoomNotFound);
+            setStatus(translations[language].statusRoomNotFound);
             return;
         }
 
@@ -2040,7 +2034,7 @@ export default function App() {
         );
 
         if (memberError) {
-            setStatus(t.roomJoinError + memberError.message);
+            setStatus(translations[language].roomJoinError + memberError.message);
             return;
         }
 
@@ -2057,13 +2051,13 @@ export default function App() {
         setConnectWinner(null);
         setConnectMySymbol("O");
         setActiveTab("chat");
-        setStatus(t.statusRoomJoined);
+        setStatus(translations[language].statusRoomJoined);
     }
 
     async function copyRoomCode(): Promise<void> {
         if (!joinedRoomCode) return;
         await navigator.clipboard.writeText(joinedRoomCode);
-        setStatus(t.statusCopied);
+        setStatus(translations[language].statusCopied);
     }
 
     async function loadMessages(roomId: string): Promise<void> {
@@ -2074,7 +2068,7 @@ export default function App() {
             .order("created_at", { ascending: true });
 
         if (error) {
-            setStatus(t.messagesLoadError + error.message);
+            setStatus(translations[language].messagesLoadError + error.message);
             return;
         }
 
@@ -2083,18 +2077,18 @@ export default function App() {
 
     async function sendMessage(): Promise<void> {
         if (!userId) {
-            setStatus(t.statusNeedLogin);
+            setStatus(translations[language].statusNeedLogin);
             return;
         }
 
         if (!joinedRoomId) {
-            setStatus(t.statusNeedRoom);
+            setStatus(translations[language].statusNeedRoom);
             return;
         }
 
         const text = draft.trim();
         if (!text) {
-            setStatus(t.statusNeedMessage);
+            setStatus(translations[language].statusNeedMessage);
             return;
         }
 
@@ -2108,11 +2102,11 @@ export default function App() {
         });
 
         if (error) {
-            setStatus(t.messageSendError + error.message);
+            setStatus(translations[language].messageSendError + error.message);
             return;
         }
 
-        setStatus(t.statusMessageSent);
+        setStatus(translations[language].statusMessageSent);
     }
 
     function renderTabButton(tab: TabKey, label: string) {
@@ -2266,8 +2260,12 @@ export default function App() {
                                 </div>
 
                                 <div>
-                                    <div style={{ fontSize: 20, fontWeight: 700 }}>{displayName || t.enterName}</div>
-                                    <div style={{ fontSize: 14, color: "#cbd5e1" }}>{userEmail || t.noMail}</div>
+                                    <div style={{ fontSize: 20, fontWeight: 700 }}>
+                                        {displayName || t.enterName}
+                                    </div>
+                                    <div style={{ fontSize: 14, color: "#cbd5e1" }}>
+                                        {userEmail || t.noMail}
+                                    </div>
                                 </div>
                             </div>
 
@@ -2279,7 +2277,15 @@ export default function App() {
                                     padding: 12,
                                 }}
                             >
-                                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6, color: "#cbd5e1", marginBottom: 8 }}>
+                                <div
+                                    style={{
+                                        fontSize: 11,
+                                        textTransform: "uppercase",
+                                        letterSpacing: 0.6,
+                                        color: "#cbd5e1",
+                                        marginBottom: 8,
+                                    }}
+                                >
                                     {t.language}
                                 </div>
                                 <div style={{ display: "flex", gap: 8 }}>
@@ -2477,7 +2483,9 @@ export default function App() {
                                                     }}
                                                 >
                                                     <div>{msg.body}</div>
-                                                    <div style={{ marginTop: 6, fontSize: 11, opacity: 0.7 }}>{msg.created_at}</div>
+                                                    <div style={{ marginTop: 6, fontSize: 11, opacity: 0.7 }}>
+                                                        {msg.created_at}
+                                                    </div>
                                                 </div>
                                             ))
                                         )}
@@ -3137,13 +3145,19 @@ export default function App() {
                                             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                                                 <button
                                                     onClick={() => setBrushSize(1)}
-                                                    style={buttonStyle(brushSize === 1 ? "#111827" : "#e5e7eb", brushSize === 1 ? "#fff" : "#111827")}
+                                                    style={buttonStyle(
+                                                        brushSize === 1 ? "#111827" : "#e5e7eb",
+                                                        brushSize === 1 ? "#fff" : "#111827"
+                                                    )}
                                                 >
                                                     1px
                                                 </button>
                                                 <button
                                                     onClick={() => setBrushSize(2)}
-                                                    style={buttonStyle(brushSize === 2 ? "#111827" : "#e5e7eb", brushSize === 2 ? "#fff" : "#111827")}
+                                                    style={buttonStyle(
+                                                        brushSize === 2 ? "#111827" : "#e5e7eb",
+                                                        brushSize === 2 ? "#fff" : "#111827"
+                                                    )}
                                                 >
                                                     2px
                                                 </button>
@@ -3503,7 +3517,9 @@ export default function App() {
                                             <div style={{ fontSize: 20, fontWeight: 700 }}>
                                                 {displayName || t.profilePreviewName}
                                             </div>
-                                            <div style={{ color: "#64748b", fontSize: 14 }}>{userEmail || t.noMail}</div>
+                                            <div style={{ color: "#64748b", fontSize: 14 }}>
+                                                {userEmail || t.noMail}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
