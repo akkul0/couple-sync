@@ -127,7 +127,7 @@ const ROOM_WIDTH = 340;
 const ROOM_HEIGHT = 560;
 const BALL_SIZE = 28;
 
-const PET_STORAGE_KEY = "take-me-pet-state-v6";
+const PET_STORAGE_KEY = "take-me-pet-state-v7";
 const LANGUAGE_STORAGE_KEY = "take-me-language-v1";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
@@ -137,8 +137,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const translations = {
     tr: {
         appBadge: "♡ Take Me",
-        heroTitle: "Couples space, but softer.",
-        heroSubtitle: "Senkron chat, Thumb Kiss, oyunlar ve ortak bakılan pet.",
+        heroTitle: "TAKE ME",
         statStatus: "Durum",
         statActiveRoom: "Aktif oda",
         statMessages: "Mesaj",
@@ -305,8 +304,7 @@ const translations = {
     },
     ru: {
         appBadge: "♡ Take Me",
-        heroTitle: "Пространство для пары, но мягче.",
-        heroSubtitle: "Синхронный чат, Thumb Kiss, игры и общий питомец.",
+        heroTitle: "TAKE ME",
         statStatus: "Статус",
         statActiveRoom: "Активная комната",
         statMessages: "Сообщения",
@@ -381,8 +379,7 @@ const translations = {
         petHappiness: "Счастье",
 
         livingDesc: "Если кто-то катает мяч, он одновременно виден и у другого.",
-        kitchenDesc:
-            "Если один кормит, питомец становится сытым у вас обоих.",
+        kitchenDesc: "Если один кормит, питомец становится сытым у вас обоих.",
         bathroomDesc: "Пена и чистота тоже общие для комнаты.",
         bedroomDesc: "Если выключить свет, он уснёт у вас обоих.",
 
@@ -504,13 +501,11 @@ function calculateTicWinner(board: TicCell[]): TicPlayer | null {
         [0, 4, 8],
         [2, 4, 6],
     ];
-
     for (const [a, b, c] of lines) {
         if (board[a] && board[a] === board[b] && board[a] === board[c]) {
             return board[a];
         }
     }
-
     return null;
 }
 
@@ -550,7 +545,6 @@ function calculateConnectWinner(board: ConnectCell[][]): ConnectPlayer | null {
                     ) {
                         break;
                     }
-
                     count++;
                 }
 
@@ -558,7 +552,6 @@ function calculateConnectWinner(board: ConnectCell[][]): ConnectPlayer | null {
             }
         }
     }
-
     return null;
 }
 
@@ -669,6 +662,19 @@ function PetBar(props: { label: string; value: number; color: string }) {
             </div>
         </div>
     );
+}
+
+function formatMessageTime(value: string, language: Language): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    try {
+        return new Intl.DateTimeFormat(language === "ru" ? "ru-RU" : "tr-TR", {
+            hour: "2-digit",
+            minute: "2-digit",
+        }).format(date);
+    } catch {
+        return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
 }
 
 export default function App() {
@@ -2217,16 +2223,24 @@ export default function App() {
                             {t.appBadge}
                         </div>
 
-                        <h1 style={{ margin: 0, fontSize: 48, lineHeight: 1.05 }}>{t.heroTitle}</h1>
-
-                        <p style={{ marginTop: 14, color: "#475569", fontSize: 16 }}>{t.heroSubtitle}</p>
+                        <h1
+                            style={{
+                                margin: 0,
+                                fontSize: 72,
+                                lineHeight: 0.95,
+                                fontWeight: 900,
+                                letterSpacing: 1,
+                            }}
+                        >
+                            {t.heroTitle}
+                        </h1>
 
                         <div
                             style={{
                                 display: "grid",
                                 gridTemplateColumns: "repeat(3, minmax(0,1fr))",
                                 gap: 12,
-                                marginTop: 20,
+                                marginTop: 24,
                             }}
                         >
                             <Stat label={t.statStatus} value={status} />
@@ -2483,8 +2497,14 @@ export default function App() {
                                                     }}
                                                 >
                                                     <div>{msg.body}</div>
-                                                    <div style={{ marginTop: 6, fontSize: 11, opacity: 0.7 }}>
-                                                        {msg.created_at}
+                                                    <div
+                                                        style={{
+                                                            marginTop: 6,
+                                                            fontSize: 11,
+                                                            opacity: 0.7,
+                                                        }}
+                                                    >
+                                                        {formatMessageTime(msg.created_at, language)}
                                                     </div>
                                                 </div>
                                             ))
